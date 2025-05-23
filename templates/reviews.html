@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Reviews</title>
+</head>
+<body>
+    <h1>All Movie Reviews</h1>
+    <ul>
+        {% for review in reviews %}
+        <li>
+            <strong>{{ review.reviewer }}</strong> rated <strong>{{ review.rating }}</strong>/5 for movie ID <strong>{{ review.movie_id }}</strong><br>
+            Comment: {{ review.comment }}
+        </li>
+        {% else %}
+        <li>No reviews yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

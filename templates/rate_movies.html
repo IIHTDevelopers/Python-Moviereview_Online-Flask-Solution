@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rate Movies</title>
+</head>
+<body>
+    <h2>Rate a Movie</h2>
+    <form method="post" action="/submit_rating">
+        <label for="movie_id">Choose a movie:</label>
+        <select name="movie_id" id="movie_id">
+            {% for movie in movies %}
+            <option value="{{ movie.id }}">{{ movie.title }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="rating">Rating (1-5):</label>
+        <input type="number" name="rating" min="1" max="5" required><br><br>
+
+        <label for="review">Review:</label><br>
+        <textarea name="review" rows="4" cols="50" required></textarea><br><br>
+
+        <input type="submit" value="Submit Rating">
+    </form>
+</body>
+</html>
