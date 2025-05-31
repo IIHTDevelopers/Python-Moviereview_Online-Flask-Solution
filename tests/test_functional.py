@@ -99,22 +99,29 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestRatingFormLoads", False, "functional")
             print(f"TestRatingFormLoads = Failed | Exception: {e}")
 
-    def test_rating_five_exists_for_movie_id_one(self):
+    def test_submit_rating_five_exists_from_url(self):
         try:
-            # Don't add data yourself — just check if it's there
-            review = next(
-                (r for r in reviews_db if r["movie_id"] == 1 and r["rating"] == 5),
+            # Step 1: Fetch existing reviews from the live URL
+            response = requests.get(f"{self.base_url}/api/reviews")
+            # Step 2: Parse the JSON response
+            reviews = response.json()
+
+            # Step 3: Check if any review has movie_id=1 and rating=5
+            match = next(
+                (r for r in reviews if int(r.get("movie_id")) == 1 and int(r.get("rating")) == 5),
                 None
             )
 
-            result = review is not None
+            result = match is not None
 
-            self.test_obj.yakshaAssert("TestRatingFiveExistsForMovieIdOne", result, "functional")
-            print("TestRatingFiveExistsForMovieIdOne = Passed" if result else "TestRatingFiveExistsForMovieIdOne = Failed")
+            # Step 4: Assert the result
+            self.test_obj.yakshaAssert("TestRatingFiveExistsFromURL", result, "functional")
+            print("TestRatingFiveExistsFromURL = Passed" if result else "TestRatingFiveExistsFromURL = Failed")
 
         except Exception as e:
-            self.test_obj.yakshaAssert("TestRatingFiveExistsForMovieIdOne", False, "functional")
-            print(f"TestRatingFiveExistsForMovieIdOne = Failed | Exception: {e}")
+            self.test_obj.yakshaAssert("TestRatingFiveExistsFromURL", False, "functional")
+            print(f"TestRatingFiveExistsFromURL = Failed | Exception: {e}")
+
 
 if __name__ == '__main__':
     unittest.main()
