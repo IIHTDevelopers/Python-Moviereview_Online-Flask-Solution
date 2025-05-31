@@ -8,6 +8,7 @@ movies_db = [
     {"id": 2, "title": "The Matrix", "director": "The Wachowskis"}
 ]
 
+# In-memory review storage
 reviews_db = []
 
 # Route: Get all movies
@@ -32,7 +33,7 @@ def get_movie(movie_id):
     movie = next((m for m in movies_db if m["id"] == movie_id), None)
     return jsonify(movie) if movie else ('Not Found', 404)
 
-# Route: User login (same logic)
+# Route: User login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     VALID_USERNAME = "admin"
@@ -48,32 +49,39 @@ def login():
             return "Invalid credentials", 401
     return render_template("login.html")
 
-# Route: Post a review (only allowed for movie with id=1)
+# Home page displaying movies
+@app.route('/')
+def home():
+    return render_template("home.html", movies=movies_db)
+
+# HTML reviews page
+@app.route('/reviews')
+def review_list():
+    return render_template("reviews.html", reviews=reviews_db)
+
+# HTML rating form
+@app.route('/rate_movies', methods=['GET'])
+def rate_movies():
+    return render_template("rate_movies.html", movies=movies_db)
+
+# ✅ JSON API: Get all reviews
+@app.route('/api/reviews', methods=['GET'])
+def get_reviews():
+    return jsonify(reviews_db)
+
+# ✅ JSON API: Post a new review
 @app.route('/api/reviews', methods=['POST'])
 def post_review():
     review_data = request.get_json()
 
-    # Only allow reviews for movie with ID 1
+    # Only allow reviews for movie ID 1
     if review_data.get('movie_id') != 1:
         return jsonify({"error": "Reviews only allowed for movie with id=1"}), 400
 
     reviews_db.append(review_data)
     return jsonify(review_data), 201
 
-# Home page displaying movies
-@app.route('/')
-def home():
-    return render_template("home.html", movies=movies_db)
-
-@app.route('/reviews')
-def review_list():
-    return render_template("reviews.html", reviews=reviews_db)
-
-@app.route('/rate', methods=['GET'])
-def rate_movies():
-    return render_template("rate_movies.html", movies=movies_db)
-
-
+# Web form submission (form-urlencoded)
 @app.route('/submit_rating', methods=['POST'])
 def submit_rating():
     try:
@@ -95,7 +103,6 @@ def submit_rating():
 
     except Exception as e:
         return f"Error: {e}", 400
-
 
 if __name__ == '__main__':
     app.run(debug=True)
