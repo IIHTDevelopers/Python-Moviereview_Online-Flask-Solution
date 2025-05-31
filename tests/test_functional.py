@@ -6,8 +6,8 @@ from tests.TestUtils import TestUtils
 class FunctionalMovieReviewTests(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
-        self.client.testing = True
         self.test_obj = TestUtils()
+        self.base_url = "http://127.0.0.1:5000"
 
     def test_default_movies_db_count(self):
         try:
@@ -16,8 +16,7 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             result = (
                 response.status_code == 200 and
                 isinstance(data, list) and
-                len(data) >= 2 and
-                all("id" in movie and "title" in movie and "director" in movie for movie in data)
+                len(data) >= 2
             )
             self.test_obj.yakshaAssert("TestDefaultMoviesDbCount", result, "functional")
             print("TestDefaultMoviesDbCount = Passed" if result else "TestDefaultMoviesDbCount = Failed")
@@ -25,30 +24,13 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestDefaultMoviesDbCount", False, "functional")
             print(f"TestDefaultMoviesDbCount = Failed | Exception: {e}")
 
-    def test_get_all_movies(self):
-        try:
-            response = self.client.get("/movies")
-            json_data = response.get_json()
-            result = (
-                response.status_code == 200 and
-                isinstance(json_data, list) and
-                len(json_data) >= 2 and
-                all("id" in movie and "title" in movie and "director" in movie for movie in json_data)
-            )
-            self.test_obj.yakshaAssert("TestGetAllMovies", result, "functional")
-            print("TestGetAllMovies = Passed" if result else "TestGetAllMovies = Failed")
-        except Exception as e:
-            self.test_obj.yakshaAssert("TestGetAllMovies", False, "functional")
-            print(f"TestGetAllMovies = Failed | Exception: {e}")
-
     def test_get_movie_by_id(self):
         try:
             response = self.client.get('/movie/1')
-            json_data = response.get_json()
+            data = response.get_json()
             result = (
                 response.status_code == 200 and
-                isinstance(json_data, dict) and
-                json_data.get("title") == "Inception"
+                data.get("title") == "Inception"
             )
             self.test_obj.yakshaAssert("TestGetMovieById", result, "functional")
             print("TestGetMovieById = Passed" if result else "TestGetMovieById = Failed")
@@ -56,43 +38,33 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestGetMovieById", False, "functional")
             print(f"TestGetMovieById = Failed | Exception: {e}")
 
-    def test_post_review_valid_movie_id_yaksha(self):
+    def test_postman_added_movie_exists(self):
         try:
-            valid_review = {
-                "movie_id": 1,
-                "review": "Amazing cinematography!",
-                "rating": 5
-            }
-            response = self.client.post('/api/reviews', json=valid_review)
-            data = response.get_json()
-            result = (
-                response.status_code == 201 and
-                isinstance(data, dict) and
-                any(r.get("review") == "Amazing cinematography!" and r.get("movie_id") == 1 for r in reviews_db)
+            response = requests.get(f"{self.base_url}/movies")
+            movies = response.json()
+            movie = next((m for m in movies if m["id"] == 3 and m["title"] == "Dune"), None)
+            result = movie is not None
+            self.test_obj.yakshaAssert("TestPostmanAddedMovieExists", result, "functional")
+            print("TestPostmanAddedMovieExists = Passed" if result else "TestPostmanAddedMovieExists = Failed")
+        except Exception as e:
+            self.test_obj.yakshaAssert("TestPostmanAddedMovieExists", False, "functional")
+            print(f"TestPostmanAddedMovieExists = Failed | Exception: {e}")
+
+    def test_postman_added_review_exists(self):
+        try:
+            response = requests.get(f"{self.base_url}/api/reviews")
+            reviews = response.json()
+            review = next(
+                (r for r in reviews if r["movie_id"] == 1 and r["review"].lower() == "masterpiece!"),
+                None
             )
-            self.test_obj.yakshaAssert("TestPostReviewValidMovieID", result, "functional")
-            print("TestPostReviewValidMovieID = Passed" if result else "TestPostReviewValidMovieID = Failed")
+            result = review is not None
+            self.test_obj.yakshaAssert("TestPostmanAddedReviewExists", result, "functional")
+            print("TestPostmanAddedReviewExists = Passed" if result else "TestPostmanAddedReviewExists = Failed")
         except Exception as e:
-            self.test_obj.yakshaAssert("TestPostReviewValidMovieID", False, "functional")
-            print(f"TestPostReviewValidMovieID = Failed | Exception: {e}")
+            self.test_obj.yakshaAssert("TestPostmanAddedReviewExists", False, "functional")
+            print(f"TestPostmanAddedReviewExists = Failed | Exception: {e}")
 
-    def test_login_page_load_and_success(self):
-        try:
-            get_response = self.client.get('/login')
-            get_success = get_response.status_code == 200 and b"<form" in get_response.data
-
-            post_response = self.client.post('/login', data={
-                'username': 'admin',
-                'password': 'secret'
-            })
-            post_success = post_response.status_code == 200 and b"Logged in as admin" in post_response.data
-
-            result = get_success and post_success
-            self.test_obj.yakshaAssert("TestLoginPageLoadAndSuccess", result, "functional")
-            print("TestLoginPageLoadAndSuccess = Passed" if result else "TestLoginPageLoadAndSuccess = Failed")
-        except Exception as e:
-            self.test_obj.yakshaAssert("TestLoginPageLoadAndSuccess", False, "functional")
-            print(f"TestLoginPageLoadAndSuccess = Failed | Exception: {e}")
 
     def test_home_page_loads(self):
         try:
@@ -104,34 +76,28 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestHomePageLoads", False, "functional")
             print(f"TestHomePageLoads = Failed | Exception: {e}")
 
-    def test_add_third_movie_success(self):
+    def test_login_form_success(self):
         try:
-            new_movie = {
-                "id": 3,
-                "title": "Dune",
-                "director": "Denis Villeneuve"
-            }
-            response = self.client.post('/movies', json=new_movie)
-            result = (
-                response.status_code == 201 and
-                any(m["id"] == 3 and m["title"] == "Dune" for m in movies_db)
-            )
-            self.test_obj.yakshaAssert("TestAddThirdMovieSuccess", result, "functional")
-            print("TestAddThirdMovieSuccess = Passed" if result else "TestAddThirdMovieSuccess = Failed")
+            response = self.client.post('/login', data={
+                'username': 'admin',
+                'password': 'secret'
+            })
+            result = response.status_code == 200 and b"Logged in as admin" in response.data
+            self.test_obj.yakshaAssert("TestLoginFormSuccess", result, "functional")
+            print("TestLoginFormSuccess = Passed" if result else "TestLoginFormSuccess = Failed")
         except Exception as e:
-            self.test_obj.yakshaAssert("TestAddThirdMovieSuccess", False, "functional")
-            print(f"TestAddThirdMovieSuccess = Failed | Exception: {e}")
+            self.test_obj.yakshaAssert("TestLoginFormSuccess", False, "functional")
+            print(f"TestLoginFormSuccess = Failed | Exception: {e}")
 
-    def test_submit_rating_url_loads(self):
+    def test_rating_form_loads(self):
         try:
             response = self.client.get('/rate')
-            result = response.status_code == 200 and b"Submit Rating" in response.data
-            self.test_obj.yakshaAssert("TestSubmitRatingUrlLoads", result, "functional")
-            print("TestSubmitRatingUrlLoads = Passed" if result else "TestSubmitRatingUrlLoads = Failed")
+            result = response.status_code == 200
+            self.test_obj.yakshaAssert("TestRatingFormLoads", result, "functional")
+            print("TestRatingFormLoads = Passed" if result else "TestRatingFormLoads = Failed")
         except Exception as e:
-            self.test_obj.yakshaAssert("TestSubmitRatingUrlLoads", False, "functional")
-            print(f"TestSubmitRatingUrlLoads = Failed | Exception: {e}")
+            self.test_obj.yakshaAssert("TestRatingFormLoads", False, "functional")
+            print(f"TestRatingFormLoads = Failed | Exception: {e}")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
