@@ -50,20 +50,20 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestPostmanAddedMovieExists", False, "functional")
             print(f"TestPostmanAddedMovieExists = Failed | Exception: {e}")
 
-    def test_postman_added_review_exists(self):
+    def test_postman_added_rating_five_exists(self):
         try:
             response = requests.get(f"{self.base_url}/api/reviews")
             reviews = response.json()
             review = next(
-                (r for r in reviews if r["movie_id"] == 1 and r["review"].lower() == "masterpiece!"),
+                (r for r in reviews if r["movie_id"] == 1 and r.get("rating") == 5),
                 None
             )
             result = review is not None
-            self.test_obj.yakshaAssert("TestPostmanAddedReviewExists", result, "functional")
-            print("TestPostmanAddedReviewExists = Passed" if result else "TestPostmanAddedReviewExists = Failed")
+            self.test_obj.yakshaAssert("TestPostmanAddedRatingFiveExists", result, "functional")
+            print("TestPostmanAddedRatingFiveExists = Passed" if result else "TestPostmanAddedRatingFiveExists = Failed")
         except Exception as e:
-            self.test_obj.yakshaAssert("TestPostmanAddedReviewExists", False, "functional")
-            print(f"TestPostmanAddedReviewExists = Failed | Exception: {e}")
+            self.test_obj.yakshaAssert("TestPostmanAddedRatingFiveExists", False, "functional")
+            print(f"TestPostmanAddedRatingFiveExists = Failed | Exception: {e}")
 
 
     def test_home_page_loads(self):
@@ -91,7 +91,7 @@ class FunctionalMovieReviewTests(unittest.TestCase):
 
     def test_rating_form_loads(self):
         try:
-            response = self.client.get('/rate')
+            response = self.client.get('/rate_movies')
             result = response.status_code == 200
             self.test_obj.yakshaAssert("TestRatingFormLoads", result, "functional")
             print("TestRatingFormLoads = Passed" if result else "TestRatingFormLoads = Failed")
