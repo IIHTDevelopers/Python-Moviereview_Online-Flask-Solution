@@ -99,5 +99,22 @@ class FunctionalMovieReviewTests(unittest.TestCase):
             self.test_obj.yakshaAssert("TestRatingFormLoads", False, "functional")
             print(f"TestRatingFormLoads = Failed | Exception: {e}")
 
+    def test_rating_five_exists_for_movie_id_one(self):
+        try:
+            # Don't add data yourself — just check if it's there
+            review = next(
+                (r for r in reviews_db if r["movie_id"] == 1 and r["rating"] == 5),
+                None
+            )
+
+            result = review is not None
+
+            self.test_obj.yakshaAssert("TestRatingFiveExistsForMovieIdOne", result, "functional")
+            print("TestRatingFiveExistsForMovieIdOne = Passed" if result else "TestRatingFiveExistsForMovieIdOne = Failed")
+
+        except Exception as e:
+            self.test_obj.yakshaAssert("TestRatingFiveExistsForMovieIdOne", False, "functional")
+            print(f"TestRatingFiveExistsForMovieIdOne = Failed | Exception: {e}")
+
 if __name__ == '__main__':
     unittest.main()
